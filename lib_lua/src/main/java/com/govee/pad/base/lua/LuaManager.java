@@ -54,7 +54,7 @@ public class LuaManager {
      * @return 设备二进制控制数据
      */
     public synchronized String encodeJsonToBytes(String filePath, String jsonStr) {
-        LuaState luaState = createLuaState(filePath, true);
+        LuaState luaState = createLuaState(filePath);
         if (luaState != null) {
             luaState.getGlobal(JSON_TO_DATA);
             luaState.pushString(jsonStr);
@@ -81,7 +81,7 @@ public class LuaManager {
      * @return 请求结果JSON
      */
     public synchronized String decodeBytesToJson(String filePath, String jsonStr) {
-        LuaState luaState = createLuaState(filePath, true);
+        LuaState luaState = createLuaState(filePath);
         if (luaState != null) {
             luaState.getGlobal(DATA_TO_JSON);
             luaState.pushString(jsonStr);
@@ -101,42 +101,34 @@ public class LuaManager {
     /**
      * 创建LUA状态机
      *
-     * @param filePath:  assets目录下的lua文件路径
-     * @param encrypted: 是否需要解密，如果是加密的lua文件，则需要解密
+     * @param filePath: assets目录下的lua文件路径
      * @return lua状态机LuaState
      */
-    private synchronized LuaState createLuaState(String filePath, boolean encrypted) {
+    private synchronized LuaState createLuaState(String filePath) {
         LuaState luaState = mLuaStateCacheMap.get(filePath);
         if (luaState == null) {
             boolean initSuccess = false;
             String errMsg = null;
             luaState = new LuaState();
-            if (encrypted) {
-                String data = readLuaStringFromAssets(filePath);
-                Log.i(TAG, "data=" + data);
-                if (data.length() > 0) {
-                    String decodeData = data;
-                    if (mDecodeKey != null) {
-                        decodeData = SecurityUtils.decodeAES128WithAppKey(data, mDecodeKey);
-                    }
-                    if (!TextUtils.isEmpty(decodeData)) {
-                        if (luaState.initWithData(decodeData)) {
-                            initSuccess = true;
-                        } else {
-                            errMsg = "Lua file init with data failed!";
-                        }
+            String data = readLuaStringFromAssets(filePath);
+            Log.i(TAG, "data=" + data);
+            if (data.length() > 0) {
+                String decodeData = data;
+                if (mDecodeKey != null) {
+                    // 解密Lua文件，获取原始Lua脚本字符流
+                    decodeData = AESCrypt.decrypt(data, mDecodeKey);
+                }
+                if (!TextUtils.isEmpty(decodeData)) {
+                    if (luaState.initWithData(decodeData)) {
+                        initSuccess = true;
                     } else {
-                        errMsg = "Lua file decode failed!";
+                        errMsg = "Lua file init with data failed!";
                     }
                 } else {
-                    errMsg = "Lua file is empty!";
+                    errMsg = "Lua file decode failed!";
                 }
             } else {
-                if (luaState.initWithFile(filePath)) {
-                    initSuccess = true;
-                } else {
-                    errMsg = "Lua file init with file failed!";
-                }
+                errMsg = "Lua file is empty!";
             }
             if (initSuccess) {
                 mLuaStateCacheMap.put(filePath, luaState);
