@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.govee.pad.base.lua.LuaManager
+import java.lang.StringBuilder
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity_TAG"
@@ -13,6 +14,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnDataToJson: Button
     private lateinit var tvResult1: TextView
     private lateinit var tvResult2: TextView
+    private val filePath = "lua_test.lua"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,19 +33,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * json转16进制hex字符串
+     */
     private fun jsonToData() {
-        val result = LuaManager(this)
-            .encodeJsonToBytes("test.lua", "66666666")
+        val jsonCmd = "{\"cmd_type\":\"control\",\"power\":\"on\",\"brightness\":\"88\"}"
+        val result = LuaManager(this).encodeJsonToBytes(filePath, jsonCmd)
         if (!TextUtils.isEmpty(result)) {
-            tvResult1.text = result
+            val sb = StringBuilder()
+            sb.append("input：\n")
+                .append(jsonCmd)
+                .append("\n\n")
+                .append("output：\n")
+                .append(result)
+
+            tvResult1.text = sb.toString()
         }
     }
 
+    /**
+     * 16进制hex转json
+     */
     private fun dataToJson() {
-        val result = LuaManager(this)
-            .decodeBytesToJson("test.lua", "88888888")
+        val hexCmd = "010158"
+        val result = LuaManager(this).decodeBytesToJson(filePath, hexCmd)
         if (!TextUtils.isEmpty(result)) {
-            tvResult2.text = result
+            val sb = StringBuilder()
+            sb.append("input：\n")
+                .append(hexCmd)
+                .append("\n\n")
+                .append("output：\n")
+                .append(result)
+            tvResult2.text = sb.toString()
         }
     }
 }

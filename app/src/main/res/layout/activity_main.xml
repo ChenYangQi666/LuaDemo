@@ -6,11 +6,12 @@
     android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:context=".MainActivity">
+
     <Button
         android:id="@+id/btnJsonToData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="JsonToData"
+        android:text="Json转16进制指令"
         android:textAllCaps="false" />
 
     <TextView
@@ -19,24 +20,22 @@
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_weight="1"
-        android:text="result："
-        android:textColor="@color/black"
-        android:textSize="18sp" />
+        android:text="~"
+        android:textColor="@color/black" />
 
     <Button
         android:id="@+id/btnDataToJson"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="dataToJson" />
+        android:text="16进制指令转Json" />
 
     <TextView
         android:id="@+id/tvResult2"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_margin="10dp"
-        android:layout_weight="2"
-        android:text="result："
-        android:textColor="@color/black"
-        android:textSize="18sp" />
+        android:layout_weight="5"
+        android:text="~"
+        android:textColor="@color/black" />
 
 </LinearLayout>
