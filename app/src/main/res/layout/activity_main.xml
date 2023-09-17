@@ -14,15 +14,6 @@
         android:text="Json转16进制指令"
         android:textAllCaps="false" />
 
-    <TextView
-        android:id="@+id/tvResult1"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="10dp"
-        android:layout_weight="1"
-        android:text="~"
-        android:textColor="@color/black" />
-
     <Button
         android:id="@+id/btnDataToJson"
         android:layout_width="match_parent"
@@ -30,11 +21,11 @@
         android:text="16进制指令转Json" />
 
     <TextView
-        android:id="@+id/tvResult2"
+        android:id="@+id/tvResult"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_margin="10dp"
-        android:layout_weight="5"
+        android:layout_weight="1"
         android:text="~"
         android:textColor="@color/black" />
 

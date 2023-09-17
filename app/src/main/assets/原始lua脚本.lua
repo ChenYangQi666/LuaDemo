@@ -6,16 +6,19 @@
 
 -- 必须要引入的库
 local JSON = require "cjson"
+local bit = require("bit")
 
 -- 定义协议属性Key
 local KEY_CMD_TYPE = "cmd_type"
 local KEY_POWER = "power"
 local KEY_BRIGHTNESS = "brightness"
+local KEY_TIME = "time"
 
 -- 定义协议属性Value
 local cmdTypeValue = 0
 local powerValue = 0
 local brightnessValue = 0
+local timeValue = 0
 
 -- 将json字符串转换为LUA中的table
 local function decodeJsonToTable(cmd)
@@ -112,6 +115,21 @@ function print_lua_table(lua_table, indent)
     end
 end
 
+--十六进制 string 转 table
+function string2table(hexstr)
+    local tb = {}
+    local i = 1
+    local j = 1
+
+    for i = 1, #hexstr - 1, 2 do
+        local doublebytestr = string.sub(hexstr, i, i + 1)
+        tb[j] = tonumber(doublebytestr, 16)
+        j = j + 1
+    end
+
+    return tb
+end
+
 -- 根据传入的json修改全局变量值
 local function updateGlobalPropertyValueByJson(luaTable)
     -- 指令类型
@@ -130,6 +148,11 @@ local function updateGlobalPropertyValueByJson(luaTable)
     if luaTable[KEY_BRIGHTNESS] ~= nil then
         brightnessValue = string2Int(luaTable[KEY_BRIGHTNESS])
     end
+    -- 时间戳
+    if luaTable[KEY_TIME] ~= nil then
+        timeValue = luaTable[KEY_TIME]
+    end
+
 end
 
 -- 根据传入的byte[]修改全局变量值
@@ -140,23 +163,28 @@ local function updateGlobalPropertyValueByByte(messageBytes)
 end
 
 -- 将属性值转换为最终table
-local function assembleJsonByGlobalProperty()
+local function parseData2Table(hexData)
+    print("hexData size=" .. #hexData)
     local jsonTable = {}
     -- 指令类型
-    if cmdTypeValue == 0x01 then
+    if hexData[1] == 0x01 then
         jsonTable[KEY_CMD_TYPE] = "control"
-    elseif cmdTypeValue == 0x02 then
+    elseif hexData[1] == 0x02 then
         jsonTable[KEY_CMD_TYPE] = "query"
     end
     -- 开关灯
-    if powerValue == 0x01 then
+    if hexData[2] == 0x01 then
         jsonTable[KEY_POWER] = "on"
-    elseif powerValue == 0x00 then
+    elseif hexData[2] == 0x00 then
         jsonTable[KEY_POWER] = "off"
     end
     -- 亮度
-    if brightnessValue ~= nil then
-        jsonTable[KEY_BRIGHTNESS] = int2String(brightnessValue)
+    if hexData[3] ~= nil then
+        jsonTable[KEY_BRIGHTNESS] = int2String(hexData[3])
+    end
+    ---- 时间戳
+    if #hexData > 6 then
+        jsonTable[KEY_TIME] = hexData[4] + bit.lshift(hexData[5], 8) + bit.lshift(hexData[6], 16) + bit.lshift(hexData[7], 24)
     end
     return jsonTable
 end
@@ -175,6 +203,12 @@ function jsonToData(jsonCmdStr)
     bodyBytes[1] = cmdTypeValue
     bodyBytes[2] = powerValue
     bodyBytes[3] = brightnessValue
+    -- 时间戳, Long类型int_64
+    print("timeValue=" .. timeValue)
+    bodyBytes[4] = bit.band(timeValue, 0xFF)
+    bodyBytes[5] = bit.band(bit.rshift(timeValue, 8), 0xFF)
+    bodyBytes[6] = bit.band(bit.rshift(timeValue, 16), 0xFF)
+    bodyBytes[7] = bit.band(bit.rshift(timeValue, 24), 0xFF)
 
     --table 转换成 string 之后返回
     local ret = table2string(bodyBytes)
@@ -187,26 +221,19 @@ function dataToJson(jsonStr)
     if (not jsonStr) then
         return nil
     end
-    local jsonTable = assembleJsonByGlobalProperty(jsonStr)
+    local hexData = string2table(jsonStr)
+    local jsonTable = parseData2Table(hexData)
     local ref = encodeTableToJson(jsonTable)
     return ref
 end
 
+-- ************************************ 以下为自测部分 ***********************************
 
-
-
-local jsonCmd = "{\"cmd_type\":\"control\",\"power\":\"on\",\"brightness\":\"88\"}"
-local hexResult = jsonToData(jsonCmd)
-print("jsonToData()--->>>>>input=" .. jsonCmd)
-print("jsonToData()--->>>>>output=" .. hexResult)
-
-local jsonResult = dataToJson(hexResult)
-print("dataToJson()--->>>>>input=" .. hexResult)
-print("jsonToData()--->>>>>output=" .. jsonResult)
-
-
-
-
-
-
-
+--local jsonCmd = "{\"power\":\"on\",\"cmd_type\":\"control\",\"brightness\":\"188\",\"time\":\"1694943200\"}"
+--local hexResult = jsonToData(jsonCmd)
+--print("jsonToData()--->>>>>input=" .. jsonCmd)
+--print("jsonToData()--->>>>>output=" .. hexResult)
+--
+--local jsonResult = dataToJson(hexResult)
+--print("dataToJson()--->>>>>input=" .. hexResult)
+--print("jsonToData()--->>>>>output=" .. jsonResult)
