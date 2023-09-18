@@ -13,9 +13,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mLuaManager: LuaManager
 
     /**
-     * 通过AES加密的lua文件
+     * 通过AES加密的lua文件，在assets目录下
      */
-    private val filePath = "encode_profile.lua"
+    private val luaFile = "encode_profile.lua"
 
     /**
      * 解密Lua文件的秘钥
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
             "{\"power\":\"on\",\"cmd_type\":\"control\",\"brightness\":\"188\",\"time\":\"1694943200\"}"
         val beginTime = System.currentTimeMillis()
         // json转16进制指令
-        val result = mLuaManager.encodeJsonToBytes(filePath, jsonCmd)
+        val result = mLuaManager.encodeJsonToBytes(luaFile, jsonCmd)
 
         if (!TextUtils.isEmpty(result)) {
             val sb = StringBuilder()
@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                 .append("输出：\n")
                 .append(result)
                 .append("\n\n")
-                .append("耗时：\n")
+                .append("耗时：")
                 .append("${System.currentTimeMillis() - beginTime}毫秒")
 
             tvResult.text = sb.toString()
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         val hexCmd = "0101bce0c70665"
         val beginTime = System.currentTimeMillis()
         // 16进制指令转json
-        val result = mLuaManager.decodeBytesToJson(filePath, hexCmd)
+        val result = mLuaManager.decodeBytesToJson(luaFile, hexCmd)
 
         if (!TextUtils.isEmpty(result)) {
             val sb = StringBuilder()
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                 .append("输出：\n")
                 .append(Utils.formatJson(result))
                 .append("\n\n")
-                .append("耗时：\n")
+                .append("耗时：")
                 .append("${System.currentTimeMillis() - beginTime}毫秒")
             tvResult.text = sb.toString()
         }
